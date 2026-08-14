@@ -500,14 +500,6 @@ Short clips are recommended for experimentation.
 
 ---
 
-📜 License
-
-Choose a license appropriate for your project before publishing.
-
-If you want others to freely use, modify, and distribute the code, an MIT License is a common choice.
-
----
-
 ⭐ If You Try It
 
 If you create something interesting with this project, consider sharing it and documenting what you changed.
