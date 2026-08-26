@@ -1,507 +1,701 @@
-📺 ASCII Video Art on Android with Termux
+# ASCII Art & Terminal Renderer
 
-Turn ordinary videos into animated ASCII art directly from an Android phone using the "Termux" (https://termux.dev/) terminal, Python, and FFmpeg.
+A collection of real-time ASCII rendering experiments built with **Python, mathematics, and terminal graphics**.
 
-No PC is required.
+What started as a simple terminal ASCII renderer gradually evolved into experiments involving **3D objects, lighting, perspective projection, RGB video rendering, animation, and synchronized audio playback**.
 
-The project converts video frames into grayscale ASCII characters and continuously renders them in the Termux terminal to create a moving ASCII-art version of the original video.
+The goal of this project is simple:
 
-«🚧 This project is experimental and currently focused on learning, experimentation, and creating interesting terminal-based visuals.»
+> **Explore how far graphics can be pushed using mathematics, characters, ANSI escape sequences, and a terminal — without relying on a conventional graphics engine.**
+
+Everything is designed to run directly inside a terminal.
 
 ---
 
-✨ What This Project Does
+## ✨ Features
 
-        🎥 Video
-           │
-           ▼
-        FFmpeg
-           │
-           ▼
-   Extract video frames
-           │
-           ▼
-     Grayscale image
-           │
-           ▼
-      ASCII mapping
-           │
-           ▼
-   Smooth frame rendering
-           │
-           ▼
-     🖥️ Termux Terminal
-           │
-           ▼
-     🎬 ASCII Video Art
+### 🎨 ASCII Rendering
 
-Dark areas of an image are represented by lighter ASCII characters, while brighter areas use denser characters.
+* Brightness-based ASCII rendering
+* Customizable ASCII character gradients
+* Real-time terminal rendering
+* Configurable rendering resolution
+* Automatic terminal-size detection
+* ANSI color rendering
+
+### 🧊 3D ASCII Objects
+
+The project contains several mathematical 3D rendering experiments:
+
+* Rotating solid cube
+* Shaded sphere
+* Donut / torus
+* Planet
+* Black hole
+* Other procedural 3D experiments
+
+These objects are rendered directly in the terminal without a traditional graphics engine.
+
+### 🎬 ASCII Video
+
+The project can convert video frames into ASCII art in real time.
+
+Features include:
+
+* Video → RGB frame conversion
+* Brightness-based ASCII mapping
+* ANSI true-color rendering
+* Configurable FPS
+* Automatic terminal resolution
+* Configurable maximum width
+* RGB color smoothing
+* Real-time terminal playback
+
+### 🔊 Audio Playback
+
+Video audio can be played simultaneously using **FFplay**.
+
+The video and audio pipelines are handled separately:
+
+```text
+                 ┌──→ FFmpeg ──→ RGB Frames ──→ Python ──→ ASCII Terminal
+Video ───────────┤
+                 └──→ FFplay ──→ Audio
+```
+
+---
+
+# 🛠️ Technologies
+
+* **Python**
+* **FFmpeg**
+* **FFplay**
+* **ANSI escape sequences**
+* **Terminal rendering**
+* **3D mathematics**
+* **Vector mathematics**
+* **Lighting calculations**
+* **Perspective projection**
+* **Depth buffering**
+* **RGB color processing**
+
+The core project uses Python's standard library and does not require external Python packages.
+
+---
+
+# 📋 Requirements
+
+## Python
+
+**Python 3.10+** is recommended.
+
+Check your installation:
+
+```bash
+py --version
+```
 
 Example:
 
-        .:-=+*#%@
-      .:-=+*##%%@
-    .:=+*##%%%%%%
-   :-+*##%%%%%%%%
-   =*##%%%%@@@@%%
-   *##%%%@@@@@@%%
+```text
+Python 3.13.15
+```
 
----
+## FFmpeg
 
-📱 Requirements
+FFmpeg is required for video processing.
 
-You need:
+Check:
 
-- Android phone
-- Termux
-- Python
-- FFmpeg
-- A video file
-- Basic knowledge of using the terminal
-
-A computer is not required.
-
----
-
-🛠️ Installation
-
-1. Install Termux
-
-Install Termux from a trusted source such as F-Droid or the official Termux project.
-
-After opening Termux, update the package repository:
-
-pkg update
-pkg upgrade
-
----
-
-2. Install Required Packages
-
-Install Python, FFmpeg, and Git:
-
-pkg install python ffmpeg git
-
-Check that they were installed:
-
-python --version
+```bash
 ffmpeg -version
-git --version
+```
+
+FFplay is required for audio playback:
+
+```bash
+ffplay -version
+```
+
+Both commands should work directly from your terminal.
+
+> **Windows:** If the commands are not recognized, make sure FFmpeg has been added to your system `PATH`.
+
 
 ---
 
-📂 3. Give Termux Storage Access
+# 🚀 Installation
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/YOUR_USERNAME/ASCII-Art.git
+```
+
+### 2. Enter the project directory
+
+```bash
+cd ASCII-Art
+```
+
+### 3. Create a virtual environment
+
+```bash
+py -m venv .venv
+```
+
+### 4. Activate the virtual environment
+
+Windows:
+
+```bash
+.venv\Scripts\activate
+```
+
+### 5. Install requirements
+
+```bash
+py -m pip install -r requirements.txt
+```
+
+The project currently relies on Python's standard library, so no additional Python packages are required for the core renderers.
+
+---
+
+# 🧊 3D ASCII Renderers
+
+All 3D renderers are located inside:
+
+```text
+ascii/
+```
+
+## Cube
 
 Run:
 
-termux-setup-storage
+```bash
+py ascii\cube.py
+```
 
-Android will ask for storage permission.
+The cube renderer demonstrates:
 
-Select Allow.
+* Perspective projection
+* Face filling
+* Depth buffering
+* Surface normals
+* Lighting
+* ASCII shading
+* Real-time rotation
 
-Termux will create convenient storage shortcuts inside:
+## Sphere
 
-~/storage/
+Run:
 
-Your shared Android storage can normally be accessed through:
+```bash
+py ascii\sphere.py
+```
 
-~/storage/shared/
+The sphere is generated mathematically and uses lighting calculations to create a shaded 3D appearance.
 
-which points to:
+## Donut
 
-/storage/emulated/0/
+Run:
+
+```bash
+py ascii\donut.py
+```
+
+The donut is generated parametrically using two angular coordinates to construct a 3D torus.
+
+## Planet
+
+Run:
+
+```bash
+py ascii\planet.py
+```
+
+The planet renderer explores procedural spherical rendering and terminal-based shading.
+
+## Black Hole
+
+Run:
+
+```bash
+py ascii\blackhole.py
+```
+
+The black-hole renderer is another procedural experiment designed to explore visual effects using terminal characters and mathematical transformations.
 
 ---
 
-📁 4. Create the Project
+# 🎬 ASCII Video Renderer
 
-Create a project directory:
+Place a video inside:
 
-mkdir ascii-video
-
-Enter it:
-
-cd ascii-video
-
-Create the Python renderer:
-
-nano ascii_video.py
-
-Paste the Python renderer from this repository into the file.
-
-Save it with:
-
-CTRL + O
-Enter
-CTRL + X
-
-Your project should now look approximately like:
-
-ascii-video/
-└── ascii_video.py
-
----
-
-🎥 5. Find a Video on Your Android Phone
-
-Videos can be stored in locations such as:
-
-/storage/emulated/0/DCIM/
-/storage/emulated/0/Download/
-/storage/emulated/0/Movies/
-
-You can search for videos using:
-
-find /storage/emulated/0 -type f \
-\( -iname "*.mp4" -o -iname "*.mov" -o -iname "*.gif" \) \
-2>/dev/null | head -50
+```text
+assets/videos/
+```
 
 For example:
 
-/storage/emulated/0/Download/example.mp4
+```text
+assets/
+└── videos/
+    └── test.mp4
+```
+
+Run the basic ASCII video renderer:
+
+```bash
+py ascii\ascii_video.py assets\videos\test.mp4
+```
+
+The renderer processes video frames and converts them into ASCII characters for real-time terminal playback.
 
 ---
 
-▶️ 6. Run the ASCII Renderer
+# 🌈 RGB ASCII Video
 
-From inside the project directory:
-
-cd ~/ascii-video
+The RGB renderer extends the basic renderer by preserving the original video's colors.
 
 Run:
 
-python ascii_video.py "/storage/emulated/0/Download/example.mp4"
+```bash
+py ascii\ascii_video_v3.py assets\videos\test.mp4
+```
 
-If the path contains spaces, keep the entire path inside quotation marks:
+The rendering pipeline is approximately:
 
-python ascii_video.py "/storage/emulated/0/My Videos/example video.mp4"
+```text
+Video Frame
+     ↓
+RGB Pixel Data
+     ↓
+Brightness Calculation
+     ↓
+ASCII Character Selection
+     ↓
+ANSI True-Color
+     ↓
+Terminal Output
+```
 
-The video will be converted into ASCII frames and displayed directly inside the Termux terminal.
-
----
-
-🧠 How It Works
-
-The renderer uses FFmpeg to decode the input video.
-
-Each frame goes through roughly this process:
-
-Video
-  ↓
-FFmpeg
-  ↓
-Individual frames
-  ↓
-Resize
-  ↓
-Grayscale
-  ↓
-Brightness values
-  ↓
-ASCII character mapping
-  ↓
-Terminal rendering
-
-The brightness of each pixel determines which ASCII character is used.
-
-The renderer uses a character gradient such as:
-
-" .:-=+*#%@"
-
-Conceptually:
-
-Dark ─────────────────────── Bright
-
-  .   :   -   =   +   *   #   %   @
-  ↑                               ↑
-Less dense                    More dense
-
-This allows an image to be represented using only text characters.
+This allows the ASCII characters to retain the approximate colors of the source video.
 
 ---
 
-🎞️ Smooth Animation
+# ⚙️ Configuration
 
-The renderer doesn't simply print one frame after another.
+Most renderers contain configuration values near the beginning of the source file.
 
-It maintains a brightness matrix and interpolates between consecutive frames.
+A typical configuration may look like:
 
-This creates a smoother transition:
-
-Frame A
-   ███
-   ███
-
-      ↓
-
-   ███
-  ████
-
-      ↓
-
-  ████
- █████
-
-Instead of:
-
-Frame A
-██████
-
-Frame B
-     ████
-
-Frame C
-          ███
-
-The goal is to make the ASCII representation visually follow the movement of the original video.
-
----
-
-⚙️ Customization
-
-The renderer contains several settings near the top of the Python file.
-
-ASCII character set
-
+```python
 CHARS = " .:-=+*#%@"
 
-You can experiment with different character sets.
+FPS = 30
 
-For example:
+MAX_WIDTH = 120
 
-CHARS = " .·:*#@"
+COLOR_SMOOTHING = 0.20
+```
+
+The exact available settings depend on the renderer.
+
+---
+
+## ASCII Character Gradient
+
+The character set determines how brightness is represented.
+
+```python
+CHARS = " .:-=+*#%@"
+```
+
+Characters near the beginning represent darker areas, while characters near the end represent brighter areas.
+
+You can experiment with different character sets:
+
+```python
+CHARS = " .·:+=#%@"
+```
+
+---
+
+# 📐 Resolution
+
+For the RGB video renderer, the maximum width can be configured using:
+
+```python
+MAX_WIDTH = 120
+```
+
+For more detail:
+
+```python
+MAX_WIDTH = 160
+```
 
 or:
 
-CHARS = " .░▒▓█"
+```python
+MAX_WIDTH = 200
+```
+
+Higher resolutions require more processing because more characters have to be generated and rendered for every frame.
+
+A reasonable starting point is:
+
+```python
+MAX_WIDTH = 120
+```
 
 ---
 
-Resolution
+# 🎞️ FPS
 
-The renderer uses:
+The target rendering FPS can be changed:
 
-WIDTH = min(shutil.get_terminal_size().columns - 2, 80)
-HEIGHT = 32
+```python
+FPS = 30
+```
 
-Increasing the resolution can produce more detailed ASCII art, but it also increases the amount of text the phone has to render.
+For slower systems:
 
-For slower devices, try:
-
-HEIGHT = 25
-
----
-
-Frame Rate
-
-The current renderer uses:
-
+```python
 FPS = 15
-
-You can experiment with:
-
-FPS = 10
+```
 
 or:
 
+```python
 FPS = 20
+```
 
-Higher FPS generally produces smoother motion but requires more processing.
+Higher FPS increases the amount of processing required.
 
----
-
-Smoothness
-
-The interpolation strength is controlled by:
-
-SMOOTHING = 0.45
-
-Lower values produce slower transitions.
-
-Higher values make the ASCII image respond more quickly to the original video.
-
-Try experimenting with:
-
-SMOOTHING = 0.30
-
-SMOOTHING = 0.45
-
-SMOOTHING = 0.70
+If the renderer cannot keep up with the requested FPS, frames may be skipped.
 
 ---
 
-⏹️ Stop the Renderer
+# 🔊 Audio Delay
 
-While the animation is running, press:
+The RGB video renderer provides an adjustable audio delay:
 
-CTRL + C
-
-This stops the Python program.
-
----
-
-📱 Why Termux?
-
-Termux provides a Linux-like environment directly on Android.
-
-That makes it possible to use familiar developer tools such as:
-
-Python
-FFmpeg
-Git
-Shell
-SSH
-GCC
-Node.js
-
-without requiring a traditional computer.
-
-This project is an experiment in seeing how far an Android phone can be pushed as a small development and content-creation environment.
-
----
-
-🚀 Development Roadmap
-
-The project is being developed incrementally.
-
-V1 — Basic ASCII Video ✅
-
-Video
- ↓
-FFmpeg
- ↓
-ASCII frames
- ↓
-Terminal
-
-V2 — Cascade Experiment 🧪
-
-Experimented with falling/cascading ASCII characters.
-
-This version demonstrated a digital-rain style reveal but was intentionally removed from the main rendering approach because the goal is smooth video animation rather than vertical sliding effects.
-
-V3 — Smooth ASCII Video ✅
-
-Current direction:
-
-Video
- ↓
-Grayscale
- ↓
-Brightness interpolation
- ↓
-ASCII conversion
- ↓
-Smooth terminal animation
-
-Future Ideas 🚀
-
-Possible future improvements:
-
-- [ ] ANSI terminal colors
-- [ ] Green/cyberpunk mode
-- [ ] Better character aspect-ratio correction
-- [ ] Automatic terminal-size detection
-- [ ] Video duration controls
-- [ ] Image-to-ASCII mode
-- [ ] Audio support
-- [ ] Glitch effects
-- [ ] Digital-rain effects
-- [ ] Export ASCII animation directly to a video file
-- [ ] Preset visual styles
-- [ ] Command-line arguments for customization
-
----
-
-🎬 Content Creation
-
-This project can also be used as a small experimental content-creation tool.
+```python
+AUDIO_DELAY = 1.0
+```
 
 For example:
 
-Original video
-      ↓
-ASCII conversion
-      ↓
-Terminal animation
-      ↓
-Screen recording
-      ↓
-Short-form video
+```python
+AUDIO_DELAY = 2.0
+```
 
-Possible content ideas:
+can delay the audio to compensate for additional video-rendering latency.
 
-- Cyberpunk ASCII animations
-- Sci-fi terminal visuals
-- Programming-themed Shorts
-- Linux/Termux experiments
-- “I made this using only my Android phone”
-- ASCII versions of original footage
-- Terminal visualizers
+The optimal value depends on the system and rendering workload.
 
 ---
 
-🧪 Project Philosophy
+# 🖥️ Recommended Terminals
 
-This project started as a simple question:
+For the best results, use a modern terminal emulator such as:
 
-«How much can I create with just an Android phone and a terminal?»
+* **Windows Terminal**
+* **PowerShell**
+* **VS Code integrated terminal**
 
-Rather than immediately building a complicated application, the project is developed step-by-step:
-
-Experiment
-   ↓
-Understand
-   ↓
-Build
-   ↓
-Improve
-   ↓
-Document
-
-The goal is not just to create ASCII videos, but to learn about:
-
-- Python
-- FFmpeg
-- Image processing
-- Video frames
-- Terminal rendering
-- Animation
-- Git/GitHub
-- Android/Linux environments
+For high-resolution rendering, maximize or enlarge the terminal window.
 
 ---
 
-🤝 Contributing
+# 🧠 How It Works
 
-Suggestions, improvements, optimizations, and new visual effects are welcome.
+## 1. Video Decoding
 
-If you experiment with the renderer and create a better algorithm, feel free to contribute.
+FFmpeg reads the source video and converts it into raw RGB frames:
 
----
+```text
+video.mp4
+    ↓
+  FFmpeg
+    ↓
+RGB Frames
+```
 
-⚠️ Limitations
-
-Terminal rendering is not designed to be a high-performance video renderer.
-
-Performance depends heavily on:
-
-- Android device
-- Terminal emulator
-- Video resolution
-- ASCII resolution
-- FPS
-- Terminal rendering speed
-
-For longer or high-resolution videos, performance may decrease significantly.
-
-Short clips are recommended for experimentation.
+Python then processes these frames.
 
 ---
 
-⭐ If You Try It
+## 2. Brightness Calculation
 
-If you create something interesting with this project, consider sharing it and documenting what you changed.
+Each RGB pixel is converted into an approximate perceived brightness using:
 
-Made on Android. Built with Termux. Powered by Python + FFmpeg. 📱🐍🎬
+```text
+Brightness =
+0.299R +
+0.587G +
+0.114B
+```
+
+The result is approximately mapped to:
+
+```text
+0 → Dark
+255 → Bright
+```
+
+The weighting gives green more influence because human vision is more sensitive to green than red or blue.
+
+---
+
+## 3. ASCII Mapping
+
+The calculated brightness is mapped to a character from the configured character gradient:
+
+```text
+Dark
+ ↓
+" "
+"."
+":"
+"="
+"+"
+"*"
+"#"
+"%"
+"@"
+ ↓
+Bright
+```
+
+This creates the visual structure of the image using only terminal characters.
+
+---
+
+## 4. RGB Rendering
+
+The original RGB information can be preserved using ANSI true-color escape sequences:
+
+```text
+ESC[38;2;R;G;Bm
+```
+
+This allows individual ASCII characters to be displayed using colors derived from the original video frame.
+
+---
+
+# 🧮 3D Rendering Pipeline
+
+The 3D experiments use mathematical transformations instead of a conventional graphics engine.
+
+A simplified pipeline looks like:
+
+```text
+3D Coordinates
+      ↓
+Rotation
+      ↓
+Lighting
+      ↓
+Perspective Projection
+      ↓
+Depth Calculation
+      ↓
+ASCII Shading
+      ↓
+Terminal
+```
+
+Depending on the renderer, the calculations can involve:
+
+* Coordinate systems
+* Rotation matrices
+* Vector mathematics
+* Surface normals
+* Perspective projection
+* Lighting
+* Depth buffering
+* Parametric surfaces
+
+This makes the project a useful playground for understanding the fundamentals behind computer graphics.
+
+---
+
+# 🎯 Learning Goals
+
+This project is primarily an experiment in understanding how graphical information can be represented without relying on a conventional graphics API.
+
+It explores:
+
+* Python programming
+* Computer graphics
+* 3D mathematics
+* Vector mathematics
+* Coordinate transformations
+* Rendering pipelines
+* Image processing
+* Video processing
+* ANSI terminal control
+* Real-time rendering
+* Performance optimization
+
+The emphasis is on **learning by building and experimenting** rather than creating a production graphics engine.
+
+---
+
+# 🚧 Known Limitations
+
+Terminal rendering is significantly slower than GPU-accelerated graphics.
+
+RGB ASCII video can become CPU-intensive at higher resolutions.
+
+A rough workload progression is:
+
+```text
+80 columns
+    ↓
+Low workload
+
+120 columns
+    ↓
+Moderate workload
+
+160 columns
+    ↓
+High workload
+
+200+ columns
+    ↓
+Very high workload
+```
+
+Actual performance depends on:
+
+* CPU
+* Terminal emulator
+* Video resolution
+* ASCII resolution
+* Target FPS
+* ANSI color rendering
+* Video complexity
+
+---
+
+# 🔮 Future Improvements
+
+Possible future experiments include:
+
+* Better audio/video synchronization
+* Frame-timestamp synchronization
+* Automatic FPS detection
+* Adaptive resolution
+* ANSI color optimization
+* Neon/cyberpunk rendering
+* Color trails
+* Motion trails
+* Particle effects
+* ASCII webcam renderer
+* ASCII image renderer
+* Cascading ASCII effects
+* Additional 3D objects
+* 3D planetary systems
+* Ray-marched ASCII scenes
+* Interactive camera controls
+* Mouse-controlled 3D camera
+* Keyboard-controlled camera
+* Terminal-based mini games
+
+---
+
+# 📸 Screenshots & Demos
+
+Add screenshots and animated demonstrations here as the project develops.
+
+Example:
+
+```markdown
+![ASCII Cube](screenshots/cube.png)
+```
+
+For an animated demo:
+
+```markdown
+![ASCII Video](screenshots/ascii-video.gif)
+```
+
+A good GitHub README can eventually showcase:
+
+* 🧊 Rotating cube
+* 🌐 Shaded sphere
+* 🍩 Donut
+* 🪐 Planet
+* 🕳️ Black hole
+* 🎬 RGB ASCII video
+
+---
+
+# 🤝 Contributing
+
+Contributions, ideas, and rendering experiments are welcome.
+
+Potential contributions include:
+
+* New ASCII rendering techniques
+* New mathematical 3D objects
+* Performance improvements
+* Rendering effects
+* Terminal compatibility improvements
+* Documentation improvements
+
+---
+
+# 👨‍💻 Author
+
+**Niladri**
+
+Electronics & Communication Engineering student interested in:
+
+* 🔌 Embedded Systems
+* 🤖 Robotics
+* 🧠 Artificial Intelligence
+* 🎨 Computer Graphics
+* 🚀 Space Technology
+* 💻 Software Development
+
+---
+
+# ⭐ Project Philosophy
+
+> **What happens if we remove the graphics engine and try to build the visuals using mathematics, characters, and a terminal?**
+
+That's the idea behind this project.
+
+From a single ASCII character:
+
+```text
+@
+```
+
+to a rotating 3D object:
+
+```text
+      @@@@@
+   @@@@@@@@@@@
+  @@@@     @@@@
+  @@@       @@@
+  @@@@     @@@@
+   @@@@@@@@@@@
+      @@@@@
+```
+
+and eventually to real-time RGB video rendering.
+
+The project is a collection of experiments exploring the boundary between **mathematics, programming, graphics, and the humble terminal.**
+
+---
+
+**Built with Python + Mathematics + Terminal Magic. 🐍⚡**
