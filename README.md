@@ -225,62 +225,6 @@ classic:   " .:-=+*#%@"
 detailed:  a longer ramp with finer brightness changes
 letters:   a dense, text-like ramp
 ```
-
-Use `--invert` when a light background or a particular source image looks better with the direction reversed.
-
-## Project structure
-
-```text
-ascii_art/
-├── __main__.py          Module entry point
-├── cli.py               Commands, options, and validation
-├── charsets.py          Shared character ramps and mapping
-├── terminal.py          Sizing, terminal lifecycle, and frame timing
-├── media/
-│   ├── image.py         Pillow image pipeline
-│   └── video.py         FFmpeg, NumPy, ANSI color, and audio timing
-└── renderers/
-    ├── cube.py
-    ├── sphere.py
-    ├── donut.py
-    ├── planet.py
-    └── blackhole.py
-
-tests/                   Focused unit and renderer-contract tests
-ascii/                   Original image/video compatibility commands
-ascii_colour/            Original color-video compatibility command
-3d/                      Original demo compatibility commands
-```
-
-Rendering mathematics is kept separate from terminal I/O. Procedural renderers accept a frame index and target dimensions, then return one complete string frame. The shared runner controls timing, drawing, interruption, and cleanup.
-
-## Legacy commands
-
-The original paths remain available and forward to the unified CLI:
-
-```powershell
-python ascii\ascii_image.py photo.png --width 100
-python ascii\ascii_video.py clip.mp4
-python ascii_colour\ascii_colour_video.py clip.mp4
-python 3d\cube.py
-python 3d\sphere.py
-python 3d\donut.py
-python 3d\planet.py
-python 3d\blackhole.py
-```
-
-New usage should prefer `ascii-art` or `python -m ascii_art`.
-
-## Development
-
-Run the test suite with only the Python standard library:
-
-```powershell
-python -m unittest discover -v
-```
-
-The tests cover character mapping, argument parsing and validation, terminal sizing, complete frame reads, default video settings, cube visibility, and the output-size contract for every procedural renderer.
-
 To add a procedural demo:
 
 1. Create a module under `ascii_art/renderers/`.
