@@ -301,14 +301,3 @@ Useful starting points:
 - Monochrome mode when color output is too expensive.
 - A larger `--quant` value to reduce ANSI color changes.
 
-Modern terminals such as Windows Terminal, PowerShell, and the VS Code integrated terminal generally provide the best results.
-
-## Project philosophy
-
-The project is a learning playground for exploring how far graphics can be pushed with Python, mathematics, characters, and a terminal—without a conventional graphics engine.
-
-It covers image processing, video decoding, terminal control, procedural geometry, coordinate transforms, perspective, lighting, rasterization, depth buffering, and real-time scheduling in a deliberately approachable codebase.
-
-## Author
-
-Originally created by **Niladri** as a collection of terminal-rendering experiments.
