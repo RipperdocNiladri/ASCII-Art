@@ -1,71 +1,14 @@
-from PIL import Image
+"""Compatibility entry point for the unified image renderer."""
 
-# -----------------------------
-# SETTINGS
-# -----------------------------
+import sys
+from pathlib import Path
 
-IMAGE_PATH = "assets\\bw_goku.jpg"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
-# Dark → bright
-ASCII_CHARS = "@%#*+=-:. "
-
-WIDTH = 100
+from ascii_art.cli import main
 
 
-# -----------------------------
-# LOAD IMAGE
-# -----------------------------
-
-image = Image.open(IMAGE_PATH)
-
-# Convert to grayscale
-image = image.convert("L")
-
-
-# -----------------------------
-# RESIZE
-# -----------------------------
-
-original_width, original_height = image.size
-
-aspect_ratio = (
-    original_height / original_width
-)
-
-# Terminal characters are taller
-new_height = int(
-    WIDTH * aspect_ratio * 0.5
-)
-
-image = image.resize(
-    (WIDTH, new_height)
-)
-
-
-# -----------------------------
-# ASCII CONVERSION
-# -----------------------------
-
-pixels = image.getdata()
-
-ascii_image = ""
-
-for i, pixel in enumerate(pixels):
-
-    index = int(
-        pixel
-        / 255
-        * (len(ASCII_CHARS) - 1)
-    )
-
-    ascii_image += ASCII_CHARS[index]
-
-    if (i + 1) % WIDTH == 0:
-        ascii_image += "\n"
-
-
-# -----------------------------
-# DISPLAY
-# -----------------------------
-
-print(ascii_image)
+if __name__ == "__main__":
+    raise SystemExit(main(["image", *sys.argv[1:]]))
