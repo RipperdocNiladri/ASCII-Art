@@ -3,16 +3,21 @@
 from __future__ import annotations
 
 import argparse
+import math
 import sys
 from pathlib import Path
 from typing import Sequence
 
-from ascii_art import __version__
-from ascii_art.charsets import CHARSETS, DEFAULT_CHARSET, get_charset
-from ascii_art.media.image import ImageRenderError, get_image_dimensions, render_image
-from ascii_art.media.video import VideoOptions, VideoRenderError, play_video
-from ascii_art.renderers import DEMOS, get_demo
-from ascii_art.terminal import fit_demo_size, fit_source_size, run_animation
+from terminal_ascii_art import __version__
+from terminal_ascii_art.charsets import CHARSETS, DEFAULT_CHARSET, get_charset
+from terminal_ascii_art.media.image import (
+    ImageRenderError,
+    get_image_dimensions,
+    render_image,
+)
+from terminal_ascii_art.media.video import VideoOptions, VideoRenderError, play_video
+from terminal_ascii_art.renderers import DEMOS, get_demo
+from terminal_ascii_art.terminal import fit_demo_size, fit_source_size, run_animation
 
 
 def _positive_int(value: str) -> int:
@@ -31,8 +36,8 @@ def _nonnegative_int(value: str) -> int:
 
 def _positive_float(value: str) -> float:
     parsed = float(value)
-    if parsed <= 0:
-        raise argparse.ArgumentTypeError("must be greater than zero")
+    if not math.isfinite(parsed) or parsed <= 0:
+        raise argparse.ArgumentTypeError("must be a finite number greater than zero")
     return parsed
 
 
