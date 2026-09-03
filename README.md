@@ -50,6 +50,34 @@ On Windows, install an FFmpeg distribution containing all three programs and ens
 
 ## Installation
 
+Install the published package from PyPI:
+
+```powershell
+python -m pip install --upgrade pip
+python -m pip install terminal-ascii-art
+```
+
+Confirm that the command is available:
+
+```powershell
+ascii-art --version
+ascii-art list
+```
+
+If `ascii-art` is not found because your Python scripts directory is not on `PATH`, use the module form:
+
+```powershell
+python -m terminal_ascii_art list
+```
+
+Python installations normally include pip. If `python -m pip --version` reports that pip is missing, bootstrap it with:
+
+```powershell
+python -m ensurepip --upgrade
+```
+
+### Install from source
+
 Clone the repository and enter it:
 
 ```powershell
@@ -70,13 +98,15 @@ Install the project in editable mode:
 python -m pip install -e .
 ```
 
-The installation provides the `ascii-art` command. During development, the same interface can be used without installation:
+The editable installation provides the `ascii-art` command. The same interface can also be invoked as a Python module:
 
 ```powershell
-python -m ascii_art list
+python -m terminal_ascii_art list
 ```
 
 ## Quick start
+
+Replace the example paths below with paths to your own image and video files.
 
 List every available renderer:
 
@@ -87,19 +117,19 @@ ascii-art list
 Convert an image:
 
 ```powershell
-ascii-art image assets\images\goku.jpg --width 100
+ascii-art image "C:\path\to\photo.jpg" --width 100
 ```
 
 Play a monochrome video with audio:
 
 ```powershell
-ascii-art video assets\videos\test.mp4
+ascii-art video "C:\path\to\video.mp4"
 ```
 
 Play a true-color video:
 
 ```powershell
-ascii-art video assets\videos\test.mp4 --color --fps 20 --width 120
+ascii-art video "C:\path\to\video.mp4" --color --fps 20 --width 120
 ```
 
 Run a procedural demo:
@@ -109,6 +139,18 @@ ascii-art demo cube
 ```
 
 Press `Ctrl+C` to stop an animation or video.
+
+Input files do not need to be inside the repository. Quote paths that contain spaces. For example, in PowerShell:
+
+```powershell
+ascii-art video "E:\Videos\Rena Circulation.mp4" --color --charset detailed --fps 20 --width 120
+```
+
+The equivalent Git Bash path is:
+
+```bash
+ascii-art video "/e/Videos/Rena Circulation.mp4" --color --charset detailed --fps 20 --width 120
+```
 
 ## Image rendering
 
@@ -225,13 +267,53 @@ classic:   " .:-=+*#%@"
 detailed:  a longer ramp with finer brightness changes
 letters:   a dense, text-like ramp
 ```
+
 To add a procedural demo:
 
-1. Create a module under `ascii_art/renderers/`.
+1. Create a module under `terminal_ascii_art/renderers/`.
 2. Implement `render_frame(frame_index, width, height, ramp) -> str`.
-3. Register it in `ascii_art/renderers/__init__.py`.
+3. Register it in `terminal_ascii_art/renderers/__init__.py`.
 4. Add a renderer-contract or algorithm-specific test.
 5. Document the new demo here.
+
+## Testing
+
+Install the project and run the test suite from the repository root:
+
+```powershell
+python -m pip install -e .
+python -m unittest discover -s tests -v
+```
+
+## Publishing a release
+
+Releases are published from `TFQ0/ASCII-Art` by `.github/workflows/publish.yml`. The workflow runs the tests on the supported Python versions, builds and validates the wheel and source distribution, and publishes them to PyPI through Trusted Publishing.
+
+Before the first release, configure a PyPI Trusted Publisher for the `terminal-ascii-art` project with these exact values:
+
+- Owner: `TFQ0`
+- Repository: `ASCII-Art`
+- Workflow: `publish.yml`
+- Environment: `pypi`
+
+The GitHub `pypi` environment permits tags matching `v*`. If the account that creates the release is its only required reviewer, **Prevent self-review** must be disabled or another reviewer must be added.
+
+For every release:
+
+1. Update `__version__` in `terminal_ascii_art/__init__.py`. Package metadata reads the version from this single source.
+2. Run the tests.
+3. Build and validate the distributions locally:
+
+   ```powershell
+   python -m pip install --upgrade build twine
+   python -m build
+   python -m twine check dist/*
+   ```
+
+4. Commit and push the release changes.
+5. Create a GitHub release whose tag exactly matches the package version with a `v` prefix, such as `v0.1.1`.
+
+Publishing a GitHub release triggers the workflow. PyPI does not allow an existing release file or version to be overwritten, so each published version must be unique.
 
 ## Performance and limitations
 
@@ -244,4 +326,8 @@ Useful starting points:
 - `160` columns for high detail on a capable terminal.
 - Monochrome mode when color output is too expensive.
 - A larger `--quant` value to reduce ANSI color changes.
+
+## License
+
+This project is distributed under the [MIT License](https://github.com/TFQ0/ASCII-Art/blob/main/LICENSE).
 

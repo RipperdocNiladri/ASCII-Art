@@ -1,6 +1,6 @@
 """Small helpers shared by procedural renderers."""
 
-from ascii_art.charsets import brightness_to_index
+from terminal_ascii_art.charsets import brightness_to_index
 
 
 def shade(unit_brightness: float, ramp: str) -> str:
