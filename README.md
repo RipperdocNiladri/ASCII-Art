@@ -311,7 +311,7 @@ For every release:
    ```
 
 4. Commit and push the release changes.
-5. Create a GitHub release whose tag exactly matches the package version with a `v` prefix, such as `v0.1.1`.
+5. Create a GitHub release whose tag exactly matches the package version with a `v` prefix, such as `v0.1.2`.
 
 Publishing a GitHub release triggers the workflow. PyPI does not allow an existing release file or version to be overwritten, so each published version must be unique.
 
