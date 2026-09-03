@@ -20,6 +20,7 @@ env/
 
 .vscode/
 .idea/
+VideoExamples/
 
 # ============================================================
 # Local videos
@@ -54,3 +55,5 @@ screenshots/generated/
 
 Thumbs.db
 .DS_Store
+
+
