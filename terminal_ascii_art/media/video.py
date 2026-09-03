@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, BinaryIO
 
-from ascii_art.terminal import draw_frame, fit_source_size, terminal_session
+from terminal_ascii_art.terminal import draw_frame, fit_source_size, terminal_session
 
 
 class VideoRenderError(RuntimeError):

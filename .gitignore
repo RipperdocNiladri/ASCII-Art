@@ -5,6 +5,8 @@
 __pycache__/
 *.py[cod]
 *.egg-info/
+build/
+dist/
 
 # ============================================================
 # Virtual environments
@@ -20,6 +22,7 @@ env/
 
 .vscode/
 .idea/
+VideoExamples/
 
 # ============================================================
 # Local videos
@@ -54,3 +57,5 @@ screenshots/generated/
 
 Thumbs.db
 .DS_Store
+
+

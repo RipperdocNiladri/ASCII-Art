@@ -1,20 +1,49 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77.0.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "terminal-ascii-art"
-version = "0.1.0"
-description = "Image, video, and procedural 3D ASCII renderers for the terminal"
+dynamic = ["version"]
+description = "Render images, videos, and procedural 3D ASCII art in a terminal"
 readme = "README.md"
 requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE*"]
+keywords = ["ascii-art", "terminal", "video", "graphics", "ansi"]
+
+authors = [
+    { name = "Niladri Pal" },
+]
+
+maintainers = [
+    { name = "Talal Alqahs" },
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Multimedia :: Graphics",
+]
+
 dependencies = [
     "numpy>=1.24",
     "Pillow>=10.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/TFQ0/ASCII-Art"
+Repository = "https://github.com/TFQ0/ASCII-Art"
+Issues = "https://github.com/TFQ0/ASCII-Art/issues"
+
 [project.scripts]
-ascii-art = "ascii_art.cli:main"
+ascii-art = "terminal_ascii_art.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["ascii_art*"]
+include = ["terminal_ascii_art*"]
+
+[tool.setuptools.dynamic]
+version = { attr = "terminal_ascii_art.__version__" }

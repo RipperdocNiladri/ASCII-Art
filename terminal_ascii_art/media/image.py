@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ascii_art.charsets import brightness_to_char
+from terminal_ascii_art.charsets import brightness_to_char
 
 
 class ImageRenderError(RuntimeError):
@@ -42,7 +42,10 @@ def render_image(path: Path, *, width: int, height: int, ramp: str) -> str:
             grayscale = source.convert("L")
             resampling = getattr(Image, "Resampling", Image).LANCZOS
             resized = grayscale.resize((width, height), resampling)
-            pixels = list(resized.getdata())
+            if hasattr(resized, "get_flattened_data"):
+                pixels = list(resized.get_flattened_data())
+            else:
+                pixels = list(resized.getdata())
     except (OSError, ValueError) as exc:
         raise ImageRenderError(f"Could not render image '{path}': {exc}") from exc
 
