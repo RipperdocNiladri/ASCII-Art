@@ -291,7 +291,7 @@ Releases are published from `TFQ0/ASCII-Art` by `.github/workflows/publish.yml`.
 
 Before the first release, configure a PyPI Trusted Publisher for the `terminal-ascii-art` project with these exact values:
 
-- Owner: `TFQ0`
+- Owner: `RipperdocNiladri`
 - Repository: `ASCII-Art`
 - Workflow: `publish.yml`
 - Environment: `pypi`
