@@ -2,7 +2,7 @@
 
 import math
 
-from .common import frame_to_text, shade
+from .common import frame_to_text, shade, sphere_point
 
 _LIGHT = (-0.6, 0.5, -1.0)
 _LIGHT_LENGTH = math.sqrt(sum(component * component for component in _LIGHT))
@@ -21,25 +21,22 @@ def render_frame(frame_index: int, width: int, height: int, ramp: str) -> str:
     buffer = [[" "] * width for _ in range(height)]
 
     for py in range(height):
-        screen_y = (py - height / 2) / (height / 2) * 2.0
         for px in range(width):
-            screen_x = (px - width / 2) / (width / 2)
-            radius_squared = screen_x * screen_x + screen_y * screen_y
-            if radius_squared > 1:
+            point = sphere_point(px, py, width, height)
+            if point is None:
                 continue
 
-            screen_z = math.sqrt(1 - radius_squared)
+            screen_x, screen_y, screen_z = point
             x = screen_x * cos_angle + screen_z * sin_angle
             z = -screen_x * sin_angle + screen_z * cos_angle
             y = screen_y
 
-            brightness = x * LIGHT[0] + y * LIGHT[1] + z * LIGHT[2]
-            if _surface_pattern(x, y, z) > 0.8:
-                brightness += 0.15
-            if brightness < 0:
-                brightness *= 0.15
+            # The terrain rotates while sunlight stays fixed in world space.
+            light = max(0.0, sum(point[i] * LIGHT[i] for i in range(3)))
+            albedo = 1.0 if _surface_pattern(x, y, z) > 0.8 else 0.75
+            brightness = 0.06 + light * albedo
 
-            edge = 1 - screen_z
+            edge = 1 + screen_z
             if edge > 0.82:
                 brightness += (edge - 0.82) * 1.5
 

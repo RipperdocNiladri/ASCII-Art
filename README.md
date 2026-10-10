@@ -1,44 +1,29 @@
 # ASCII Art & Terminal Renderer
 
-A small command-line application for rendering images, videos, and procedural 3D experiments directly in a terminal.
+A small Python command-line tool for converting images and videos into ASCII art and running five animated 3D demos in your terminal. Videos support monochrome or ANSI true color, with optional audio.
 
-The project treats the terminal as a character-based framebuffer. Pixel brightness selects an ASCII character, ANSI escape sequences provide true color and screen updates, and mathematical renderers supply geometry, projection, lighting, and depth.
+- [Download and install](#download-and-install)
+- [Usage examples](#usage-examples)
+- [All commands and options](#all-commands-and-options)
+- [Quality and performance](#quality-and-performance)
+- [Troubleshooting](#troubleshooting)
+- [Development](#development)
+- [License](#license)
 
-```text
-source pixels or 3D geometry
-              ↓
-      brightness / lighting
-              ↓
-        character mapping
-              ↓
-       optional ANSI color
-              ↓
-            terminal
+## Download and install
+
+### 1. Install the prerequisites
+
+Install [Python 3.10 or newer](https://www.python.org/downloads/), then check that Python and pip are available:
+
+```powershell
+python --version
+python -m pip --version
 ```
 
-## Features
+Pillow and NumPy are installed automatically with the tool. Video playback also needs external FFmpeg programs; images and demos do not need them.
 
-- One `ascii-art` command for every renderer.
-- Still-image conversion with automatic aspect-ratio correction.
-- Monochrome and ANSI true-color video playback.
-- Optional synchronized audio through FFplay.
-- Frame dropping to limit long-term audio/video drift.
-- Configurable FPS, width, character ramp, color smoothing, and inversion.
-- Automatic fitting to the current terminal.
-- Five procedural demos: cube, sphere, donut, planet, and black hole.
-- Safe terminal cleanup after completion, errors, or `Ctrl+C`.
-- Compatibility entry points for the original scripts.
-
-## Requirements
-
-- Python 3.10 or newer.
-- Pillow for still images.
-- NumPy for video frame processing.
-- FFmpeg for video decoding.
-- FFplay for audio playback, unless `--no-audio` is used.
-- FFprobe is recommended for detecting the source video's dimensions. A 16:9 fallback is used when it is unavailable.
-
-Check the external video tools:
+For video, choose a build for your operating system from the [FFmpeg download page](https://ffmpeg.org/download.html). On Windows, extract a build containing `ffmpeg.exe`, `ffplay.exe`, and `ffprobe.exe`, add its `bin` directory to `PATH`, and reopen PowerShell.
 
 ```powershell
 ffmpeg -version
@@ -46,288 +31,156 @@ ffplay -version
 ffprobe -version
 ```
 
-On Windows, install an FFmpeg distribution containing all three programs and ensure its executable directory is on `PATH`.
+FFmpeg decodes video. FFplay supplies audio and is optional with `--no-audio`. FFprobe detects video dimensions; the tool assumes a 16:9 source when probing is unavailable or fails.
 
-## Installation
+### 2. Choose an installation method
 
-Install the published package from PyPI:
+**Option A: Install the published package**
 
-```powershell
-python -m pip install --upgrade pip
-python -m pip install terminal-ascii-art
-```
-
-Confirm that the command is available:
+Download and install the latest published version from [PyPI](https://pypi.org/project/terminal-ascii-art/):
 
 ```powershell
-ascii-art --version
-ascii-art list
+pip install terminal-ascii-art
 ```
 
-If `ascii-art` is not found because your Python scripts directory is not on `PATH`, use the module form:
+**Option B: Download and install the source**
+
+## Usage examples
+
+It is recommended to use **PowerShell** in windows . Run one example at a time, and adjust the paths, sizes, or options to suit your files. Example images and videos are **not bundled** with the tool.
+
+### Play a video
+
+Start with monochrome playback and audio:
 
 ```powershell
-python -m terminal_ascii_art list
+ascii-art video $videoPath
 ```
 
-Python installations normally include pip. If `python -m pip --version` reports that pip is missing, bootstrap it with:
+Use color, a detailed character ramp, 30 FPS, and a three-second startup delay:
 
 ```powershell
-python -m ensurepip --upgrade
+ascii-art video video.mp4 --color --charset detailed --fps 30 --width 250 --start-delay 3
 ```
-
-### Install from source
-
-Clone the repository and enter it:
+or
 
 ```powershell
-git clone https://github.com/RipperdocNiladri/ASCII-Art.git
-cd ASCII-Art
+ascii-art video video.mp4 --color --charset letters --fps 30 --width 250 --start-delay 3
 ```
 
-Create and activate a virtual environment:
+Change `250` to the maximum number of columns you want. The output still shrinks to fit the terminal. Remove `--color` for monochrome or `--start-delay 3` to start immediately.
+
+Reduce shimmer in still areas while preserving moving edges:
 
 ```powershell
-py -m venv .venv
-.venv\Scripts\Activate.ps1
+ascii-art video video.mp4 --color --charset detailed --width 160 --smoothing 0.65
 ```
 
-Install the project in editable mode:
+Use a smaller, silent render for a slower terminal:
 
 ```powershell
-python -m pip install -e .
+ascii-art video video.mp4 --width 80 --fps 20 --no-audio
 ```
 
-The editable installation provides the `ascii-art` command. The same interface can also be invoked as a Python module:
+Adjust audio timing independently of the startup delay:
 
 ```powershell
-python -m terminal_ascii_art list
+# Start audio half a second after the video
+ascii-art video $videoPath --audio-delay 0.5
+
+# Give audio a half-second head start
+ascii-art video $videoPath --audio-delay=-0.5
 ```
 
-## Quick start
+`--start-delay` waits after the initial file and dependency checks, before starting either media process. It accepts fractional seconds, works with `--no-audio`, and can be cancelled with `Ctrl+C`. `--audio-delay` changes the relative timing of sound and picture.
 
-Replace the example paths below with paths to your own image and video files.
+### Convert an image
 
-List every available renderer:
+Print an image as ASCII:
 
 ```powershell
-ascii-art list
+ascii-art image $imagePath --width 100
 ```
 
-Convert an image:
+Save a detailed render to a UTF-8 text file:
 
 ```powershell
-ascii-art image "C:\path\to\photo.jpg" --width 100
+ascii-art image $imagePath --width 120 --charset detailed --output ".\output\photo.txt"
 ```
 
-Play a monochrome video with audio:
+The output folder is created if needed; an existing file at that path is replaced. Open the text in a monospaced font to keep the characters aligned.
+
+Set both size limits and reverse the brightness mapping:
 
 ```powershell
-ascii-art video "C:\path\to\video.mp4"
+ascii-art image $imagePath --width 100 --height 40 --charset detailed --invert
 ```
 
-Play a true-color video:
+Images preserve their visual aspect ratio, account for tall terminal cells, and respect EXIF orientation and transparency. Image output, including saved text, is sized to fit the current terminal.
 
-```powershell
-ascii-art video "C:\path\to\video.mp4" --color --fps 20 --width 120
-```
+### Run a 3D demo
 
-Run a procedural demo:
+These examples need no media files. Run one, stop it with `Ctrl+C`, then try another:
 
 ```powershell
 ascii-art demo cube
-```
-
-Press `Ctrl+C` to stop an animation or video.
-
-Input files do not need to be inside the repository. Quote paths that contain spaces. For example, in PowerShell:
-
-```powershell
-ascii-art video "E:\Videos\Rena Circulation.mp4" --color --charset detailed --fps 20 --width 120
-```
-
-The equivalent Git Bash path is:
-
-```bash
-ascii-art video "/e/Videos/Rena Circulation.mp4" --color --charset detailed --fps 20 --width 120
-```
-
-## Image rendering
-
-```powershell
-ascii-art image IMAGE [options]
-```
-
-Examples:
-
-```powershell
-# Print the result in the terminal
-ascii-art image photo.png --width 120
-
-# Write plain ASCII to a UTF-8 text file
-ascii-art image photo.png --width 120 --output output\photo.txt
-
-# Use a longer character ramp and reverse its brightness direction
-ascii-art image photo.png --charset detailed --invert
-```
-
-Options:
-
-| Option | Purpose |
-| --- | --- |
-| `--width N` | Maximum output width. Default: `100`. |
-| `--height N` | Optional maximum output height. |
-| `--charset NAME` | `classic`, `detailed`, or `letters`. |
-| `--invert` | Reverse the dark-to-bright ramp. |
-| `-o`, `--output PATH` | Write the rendered text to a file. |
-
-The source ratio is preserved while accounting for terminal cells being approximately twice as tall as they are wide.
-
-## Video rendering
-
-```powershell
-ascii-art video VIDEO [options]
-```
-
-The default mode is monochrome with audio enabled. Add `--color` to preserve approximate source colors using ANSI 24-bit foreground codes.
-
-Examples:
-
-```powershell
-# Monochrome video without audio
-ascii-art video clip.mp4 --no-audio
-
-# Detailed true-color playback
-ascii-art video clip.mp4 --color --charset detailed --width 160 --fps 20
-
-# Add motion trails
-ascii-art video clip.mp4 --color --smoothing 0.35
-
-# Delay audio by 0.5 seconds
-ascii-art video clip.mp4 --audio-delay 0.5
-```
-
-Options:
-
-| Option | Purpose |
-| --- | --- |
-| `--color` | Enable ANSI true-color output. |
-| `--fps N` | Target playback rate. Default: `20`. |
-| `--width N` | Maximum render width. Default: `160`. |
-| `--smoothing N` | Temporal blend from `0` to `1`; `1` is crisp. |
-| `--quant N` | Color quantization step used to reduce ANSI output. Default: `4`. |
-| `--max-frame-skip N` | Consecutive frames that may be dropped to catch up. Default: `5`. |
-| `--no-audio` | Do not start FFplay. |
-| `--audio-delay N` | Shift audio by -30 to +30 seconds; positive values delay it. |
-| `--charset NAME` | `classic`, `detailed`, or `letters`. |
-| `--invert` | Reverse the selected brightness ramp. |
-
-The video pipeline is:
-
-```text
-                       ┌─ FFmpeg → scaled raw frames → NumPy → ASCII → terminal
-source video ──────────┤
-                       └─ FFplay → audio
-```
-
-The renderer uses a wall-clock schedule. When terminal rendering falls behind, it can discard a bounded number of decoded frames instead of allowing drift to grow continuously.
-
-## Procedural demos
-
-```powershell
-ascii-art demo NAME [options]
-```
-
-Available names:
-
-| Demo | Technique |
-| --- | --- |
-| `cube` | Vertex rotation, perspective projection, face normals, back-face culling, triangle filling, and interpolated depth buffering. |
-| `sphere` | Per-cell sphere reconstruction and directional lighting. |
-| `donut` | Parametric torus sampling, normal-based lighting, perspective, and depth buffering. |
-| `planet` | Rotating sphere with procedural terrain, a night side, and an atmospheric rim. |
-| `blackhole` | Polar-coordinate accretion disk, deterministic stars, asymmetric glow, and a photon-ring effect. |
-
-Examples:
-
-```powershell
+ascii-art demo sphere --charset detailed
 ascii-art demo donut --fps 30
 ascii-art demo planet --width 120 --charset detailed
 ascii-art demo blackhole --width 140 --height 50
 ```
 
-Every demo accepts `--width`, `--height`, `--fps`, `--charset`, and `--invert`. Dimensions are reduced when necessary to fit the terminal.
+## All commands and options
 
-## Character ramps
+All commands and options supported by `ascii-art` are listed here. Put options after the relevant subcommand, for example `ascii-art video $videoPath --fps 30`. Replace `PATH`, `NAME`, and `N` with your own values; do not type those placeholders literally.
 
-Character ramps are ordered from dark to bright:
+| Command or option | Applies to | Purpose / accepted values | Default |
+| --- | --- | --- | --- |
+| `ascii-art list` | Main command | List the image/video renderers and all demos. | — |
+| `ascii-art image PATH` | Main command | Convert a still image to monochrome ASCII. | Print to terminal |
+| `ascii-art video PATH` | Main command | Play a video as ASCII. | Monochrome, audio enabled |
+| `ascii-art demo NAME` | Main command | Run one of the five demos below. | Name required |
+| `ascii-art demo cube` | Demo | Rotating filled cube with lighting and depth buffering. | Width `80` |
+| `ascii-art demo sphere` | Demo | Shaded sphere with an orbiting light. | Width `80` |
+| `ascii-art demo donut` | Demo | Rotating torus with lighting and depth buffering. | Width `80` |
+| `ascii-art demo planet` | Demo | Rotating procedural terrain, a night side, and an atmospheric rim. | Width `90` |
+| `ascii-art demo blackhole` | Demo | Stylized accretion disk, stars, and photon ring. | Width `100` |
+| `--version` | `ascii-art` | Show the installed code's version and exit. | — |
+| `-h`, `--help` | Main command or any subcommand | Show help and exit, e.g. `ascii-art video --help`. | — |
+| `--width N` | `image`, `video`, `demo` | Maximum character columns; positive integer, limited by terminal size. | Image: `100`; video: `160`; demo: widths above |
+| `--height N` | `image`, `demo` | Image: maximum rows. Demo: requested rows, limited by terminal size. Positive integer. | Calculated from source ratio or demo |
+| `--charset NAME` | `image`, `video`, `demo` | Character ramp: `classic`, `detailed`, or `letters`. | `classic` |
+| `--invert` | `image`, `video`, `demo` | Reverse the chosen dark-to-bright character ramp. | Off |
+| `-o PATH`, `--output PATH` | `image` | Write or replace a UTF-8 text file; create parent folders if needed. | Print to terminal |
+| `--color` | `video` | Enable ANSI 24-bit foreground colors. | Off |
+| `--mono` | `video` | Force monochrome; compatibility option. If combined with `--color`, the last flag wins. | Monochrome |
+| `--fps N` | `video`, `demo` | Target frames per second; positive finite number. | `30` |
+| `--smoothing N` | `video` | Blend small changes in still areas: `0` is strongest, `1` disables blending. | `1` |
+| `--quant N` | `video` with `--color` | Positive integer color quantization step; larger values reduce color detail and ANSI output. | `4` |
+| `--max-frame-skip N` | `video` | Maximum consecutive frames dropped to catch up; nonnegative integer. | `5` |
+| `--no-audio` | `video` | Disable FFplay audio. | Audio enabled |
+| `--start-delay N` | `video` | Wait before starting video and audio; nonnegative finite seconds, decimals allowed. | `0` |
+| `--audio-delay N` | `video` | Audio offset from `-30` to `30` seconds; positive delays audio, negative gives it a head start. | `0` |
+| `python -m terminal_ascii_art ...` | Alternative entry point | Use the same subcommands and options through Python. | Same as `ascii-art` |
+
+## Quality and performance
+
+- **Character detail:** `classic` uses ` .:-=+*#%@`; `detailed` provides more tonal steps; `letters` gives a dense, text-like appearance. All are ordered from dark to bright.
+- **Resolution:** try widths of `80`, `120`, or `160` first. A wider terminal or smaller font allows more detail. For a 16:9 source, `--width 250` needs roughly 252 terminal columns and 72 rows, including margins.
+- **Motion:** match the source frame rate when practical; use `--fps 30` for a 30 FPS clip. Lower FPS or width if your terminal struggles. Smoothing reduces shimmer, not frame-rate judder.
+- **Color overhead:** monochrome is cheaper to display. In color mode, a larger `--quant` value reduces color changes at the cost of color precision.
+
+## Development
+
+The terminal acts as a character-based framebuffer: brightness or lighting selects a character, with optional ANSI foreground color.
 
 ```text
-classic:   " .:-=+*#%@"
-detailed:  a longer ramp with finer brightness changes
-letters:   a dense, text-like ramp
+image → Pillow → grayscale → ASCII text
+video → FFmpeg → scaled frames → NumPy → ASCII / ANSI terminal output
+      └ FFplay → audio
+demo  → geometry + projection + lighting → ASCII terminal output
 ```
-
-To add a procedural demo:
-
-1. Create a module under `terminal_ascii_art/renderers/`.
-2. Implement `render_frame(frame_index, width, height, ramp) -> str`.
-3. Register it in `terminal_ascii_art/renderers/__init__.py`.
-4. Add a renderer-contract or algorithm-specific test.
-5. Document the new demo here.
-
-## Testing
-
-Install the project and run the test suite from the repository root:
-
-```powershell
-python -m pip install -e .
-python -m unittest discover -s tests -v
-```
-
-## Publishing a release
-
-Releases are published from `TFQ0/ASCII-Art` by `.github/workflows/publish.yml`. The workflow runs the tests on the supported Python versions, builds and validates the wheel and source distribution, and publishes them to PyPI through Trusted Publishing.
-
-Before the first release, configure a PyPI Trusted Publisher for the `terminal-ascii-art` project with these exact values:
-
-- Owner: `RipperdocNiladri`
-- Repository: `ASCII-Art`
-- Workflow: `publish.yml`
-- Environment: `pypi`
-
-The GitHub `pypi` environment permits tags matching `v*`. If the account that creates the release is its only required reviewer, **Prevent self-review** must be disabled or another reviewer must be added.
-
-For every release:
-
-1. Update `__version__` in `terminal_ascii_art/__init__.py`. Package metadata reads the version from this single source.
-2. Run the tests.
-3. Build and validate the distributions locally:
-
-   ```powershell
-   python -m pip install --upgrade build twine
-   python -m build
-   python -m twine check dist/*
-   ```
-
-4. Commit and push the release changes.
-5. Create a GitHub release whose tag exactly matches the package version with a `v` prefix, such as `v0.1.2`.
-
-Publishing a GitHub release triggers the workflow. PyPI does not allow an existing release file or version to be overwritten, so each published version must be unique.
-
-## Performance and limitations
-
-Terminal output is much slower than GPU rendering. Performance depends on the CPU, terminal emulator, selected width, FPS, character ramp, and whether ANSI color is enabled.
-
-Useful starting points:
-
-- `80` columns for low overhead.
-- `120` columns for balanced detail.
-- `160` columns for high detail on a capable terminal.
-- Monochrome mode when color output is too expensive.
-- A larger `--quant` value to reduce ANSI color changes.
 
 ## License
 
 This project is distributed under the [MIT License](https://github.com/TFQ0/ASCII-Art/blob/main/LICENSE).
-

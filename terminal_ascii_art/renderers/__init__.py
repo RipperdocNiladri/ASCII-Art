@@ -23,7 +23,7 @@ DEMOS = {
     demo.name: demo
     for demo in (
         Demo("cube", "Rotating filled cube with lighting and depth buffering", 80, 0.44, cube.render_frame),
-        Demo("sphere", "Mathematically shaded rotating sphere", 80, 0.44, sphere.render_frame),
+        Demo("sphere", "Shaded sphere with an orbiting light", 80, 0.44, sphere.render_frame),
         Demo("donut", "Parametric torus with lighting and depth buffering", 80, 0.44, donut.render_frame),
         Demo("planet", "Procedural planet with terrain and atmospheric rim", 90, 0.42, planet.render_frame),
         Demo("blackhole", "Stylized accretion disk, stars, and photon ring", 100, 0.42, blackhole.render_frame),

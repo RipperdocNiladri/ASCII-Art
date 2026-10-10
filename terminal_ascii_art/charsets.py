@@ -20,11 +20,11 @@ def get_charset(name: str = DEFAULT_CHARSET, *, invert: bool = False) -> str:
 
 
 def brightness_to_index(brightness: float, ramp_length: int) -> int:
-    """Map a brightness in the 0..255 range to a safe ramp index."""
+    """Map a brightness in the 0..255 range to the nearest safe ramp index."""
     if ramp_length < 1:
         raise ValueError("A character ramp cannot be empty.")
     value = max(0.0, min(255.0, float(brightness)))
-    return int(value * (ramp_length - 1) / 255.0)
+    return round(value * (ramp_length - 1) / 255.0)
 
 
 def brightness_to_char(brightness: float, ramp: str) -> str:

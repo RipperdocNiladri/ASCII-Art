@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import shutil
 import subprocess
 import time
@@ -18,7 +19,7 @@ class VideoRenderError(RuntimeError):
 
 @dataclass(frozen=True)
 class VideoOptions:
-    fps: float = 20.0
+    fps: float = 30.0
     max_width: int = 160
     color: bool = False
     smoothing: float = 1.0
@@ -26,6 +27,7 @@ class VideoOptions:
     max_frame_skip: int = 5
     audio: bool = True
     audio_delay: float = 0.0
+    start_delay: float = 0.0
 
 
 def _load_numpy() -> Any:
@@ -83,36 +85,44 @@ def _frame_array(raw: bytes, rows: int, cols: int, color: bool, np: Any) -> Any:
     return np.frombuffer(raw, dtype=np.uint8).reshape(shape).astype(np.float32)
 
 
-def _smooth(current: Any, previous: Any | None, factor: float) -> Any:
+def _smooth(current: Any, previous: Any | None, factor: float, np: Any) -> Any:
+    """Blend small fluctuations, but keep moving edges and scene cuts crisp."""
     if previous is None or factor >= 0.999:
         return current
-    return previous + (current - previous) * factor
+    difference = np.abs(current - previous)
+    if current.ndim == 3:
+        difference = difference.max(axis=2, keepdims=True)
+    # A change of 32 levels or more uses the new pixel without a motion trail.
+    blend = factor + (1.0 - factor) * np.clip(difference / 32.0, 0.0, 1.0)
+    return previous + (current - previous) * blend
+
+
+def _character_indices(brightness: Any, ramp: str, np: Any) -> Any:
+    """Select the nearest shade instead of consistently rounding darker."""
+    return np.clip(
+        np.rint(brightness * (len(ramp) - 1) / 255), 0, len(ramp) - 1
+    ).astype(np.intp)
 
 
 def _render_mono(array: Any, ramp: str, np: Any) -> str:
-    indices = np.clip(
-        (array * (len(ramp) - 1) / 255).astype(np.int32), 0, len(ramp) - 1
-    )
-    return "\n".join("".join(ramp[index] for index in row) for row in indices.tolist())
+    indices = _character_indices(array, ramp, np)
+    characters = np.asarray(list(ramp))[indices]
+    return "\n".join("".join(row) for row in characters.tolist())
 
 
 def _render_color(array: Any, ramp: str, quantization: int, np: Any) -> str:
     brightness = 0.299 * array[..., 0] + 0.587 * array[..., 1] + 0.114 * array[..., 2]
-    char_indices = np.clip(
-        (brightness * (len(ramp) - 1) / 255).astype(np.int32), 0, len(ramp) - 1
-    )
+    char_indices = _character_indices(brightness, ramp, np)
+    characters = np.asarray(list(ramp))[char_indices]
     clipped = np.clip(array, 0, 255)
     if quantization > 1:
-        colors = (clipped // quantization * quantization).astype(np.int64)
+        colors = np.clip(np.rint(clipped / quantization) * quantization, 0, 255)
     else:
-        colors = clipped.astype(np.int64)
+        colors = np.rint(clipped)
+    colors = colors.astype(np.uint32)
 
-    key = (
-        (colors[..., 0] << 40)
-        | (colors[..., 1] << 32)
-        | (colors[..., 2] << 24)
-        | char_indices.astype(np.int64)
-    )
+    # Changing a character does not require repeating the same ANSI color.
+    key = (colors[..., 0] << 16) | (colors[..., 1] << 8) | colors[..., 2]
 
     lines = []
     rows, cols = key.shape
@@ -120,13 +130,16 @@ def _render_color(array: Any, ramp: str, quantization: int, np: Any) -> str:
         changes = np.flatnonzero(key[y, 1:] != key[y, :-1]) + 1
         starts = np.concatenate(([0], changes))
         ends = np.concatenate((changes, [cols]))
+        text = "".join(characters[y].tolist())
         parts = []
-        for start, end in zip(starts.tolist(), ends.tolist()):
-            red, green, blue = colors[y, start]
-            character = ramp[char_indices[y, start]]
-            parts.append(
-                f"\033[38;2;{red};{green};{blue}m" + character * (end - start)
-            )
+        for start, end, (red, green, blue) in zip(
+            starts.tolist(), ends.tolist(), colors[y, starts].tolist()
+        ):
+            run = text[start:end]
+            if run.strip():
+                parts.append(f"\033[38;2;{red};{green};{blue}m" + run)
+            else:
+                parts.append(run)
         lines.append("".join(parts) + "\033[0m")
     return "\n".join(lines)
 
@@ -161,6 +174,8 @@ def _stop_process(process: subprocess.Popen[Any] | None) -> None:
 
 
 def play_video(video: Path, *, options: VideoOptions, ramp: str) -> None:
+    if not math.isfinite(options.start_delay) or options.start_delay < 0:
+        raise VideoRenderError("Start delay must be a finite number zero or greater.")
     if not video.is_file():
         raise VideoRenderError(f"Video not found: {video}")
     if shutil.which("ffmpeg") is None:
@@ -179,7 +194,6 @@ def play_video(video: Path, *, options: VideoOptions, ramp: str) -> None:
     print(f"Render: {cols} x {rows} characters at {options.fps:g} FPS")
     print(f"Mode: {'ANSI true-color' if options.color else 'monochrome'}")
     print(f"Audio: {'enabled' if options.audio else 'disabled'}")
-    print("Starting... Press Ctrl+C to stop.")
 
     command = [
         "ffmpeg",
@@ -189,7 +203,7 @@ def play_video(video: Path, *, options: VideoOptions, ramp: str) -> None:
         "-i",
         str(video),
         "-vf",
-        f"fps={options.fps},scale={cols}:{rows}",
+        f"fps={options.fps},scale={cols}:{rows}:flags=lanczos+accurate_rnd:out_range=full",
         "-f",
         "rawvideo",
         "-pix_fmt",
@@ -202,6 +216,13 @@ def play_video(video: Path, *, options: VideoOptions, ramp: str) -> None:
     interrupted = False
 
     try:
+        if options.start_delay > 0:
+            print(
+                f"Starting in {options.start_delay:g} seconds... Press Ctrl+C to cancel.",
+                flush=True,
+            )
+            time.sleep(options.start_delay)
+        print("Starting... Press Ctrl+C to stop.")
         video_process = subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
@@ -211,17 +232,8 @@ def play_video(video: Path, *, options: VideoOptions, ramp: str) -> None:
         if video_process.stdout is None:
             raise VideoRenderError("FFmpeg did not provide a video stream.")
 
-        if options.audio and options.audio_delay <= 0:
-            audio_process = _start_audio(video)
-            if options.audio_delay < 0:
-                time.sleep(-options.audio_delay)
-
-        start_time = time.perf_counter()
-        audio_start_time = (
-            start_time + options.audio_delay
-            if options.audio and options.audio_delay > 0
-            else None
-        )
+        start_time = None
+        audio_start_time = None
         frame_duration = 1.0 / options.fps
         frame_index = 0
         consecutive_drops = 0
@@ -233,29 +245,42 @@ def play_video(video: Path, *, options: VideoOptions, ramp: str) -> None:
                 if raw is None:
                     break
 
-                now = time.perf_counter()
-                if audio_start_time is not None and now >= audio_start_time:
-                    audio_process = _start_audio(video)
-                    audio_start_time = None
+                # Decoder startup is not playback lag. Start the clock and audio
+                # only once a complete first frame is available.
+                if start_time is None:
+                    if options.audio and options.audio_delay <= 0:
+                        audio_process = _start_audio(video)
+                        if options.audio_delay < 0:
+                            time.sleep(-options.audio_delay)
+                    start_time = time.perf_counter()
+                    if options.audio and options.audio_delay > 0:
+                        audio_start_time = start_time + options.audio_delay
 
                 target_time = start_time + frame_index * frame_duration
                 frame_index += 1
-                lag = now - target_time
+                lag = time.perf_counter() - target_time
                 if lag > frame_duration and consecutive_drops < options.max_frame_skip:
                     consecutive_drops += 1
+                    previous = None
                     continue
 
                 consecutive_drops = 0
-                if lag < 0:
-                    time.sleep(-lag)
-
                 current = _frame_array(raw, rows, cols, options.color, np)
-                current = _smooth(current, previous, options.smoothing)
+                current = _smooth(current, previous, options.smoothing, np)
                 previous = current
                 if options.color:
                     frame = _render_color(current, ramp, options.quantization, np)
                 else:
                     frame = _render_mono(current, ramp, np)
+
+                # Prepare the frame before waiting so render cost does not add
+                # a variable delay to every scheduled presentation.
+                remaining = target_time - time.perf_counter()
+                if remaining > 0:
+                    time.sleep(remaining)
+                if audio_start_time is not None and time.perf_counter() >= audio_start_time:
+                    audio_process = _start_audio(video)
+                    audio_start_time = None
                 draw_frame(frame)
 
         video_process.wait(timeout=5)

@@ -26,6 +26,15 @@ class CharsetTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             brightness_to_index(100, 0)
 
+    def test_nearest_shade_does_not_bias_midtones_darker(self) -> None:
+        self.assertEqual(brightness_to_index(64, 3), 1)
+        self.assertEqual(brightness_to_index(191, 3), 1)
+        self.assertEqual(brightness_to_char(128, get_charset("classic")), "+")
+
+    def test_single_character_ramp_is_valid(self) -> None:
+        for brightness in (0, 128, 255):
+            self.assertEqual(brightness_to_char(brightness, "X"), "X")
+
 
 if __name__ == "__main__":
     unittest.main()

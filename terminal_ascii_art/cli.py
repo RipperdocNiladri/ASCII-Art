@@ -41,6 +41,13 @@ def _positive_float(value: str) -> float:
     return parsed
 
 
+def _nonnegative_float(value: str) -> float:
+    parsed = float(value)
+    if not math.isfinite(parsed) or parsed < 0:
+        raise argparse.ArgumentTypeError("must be a finite number zero or greater")
+    return parsed
+
+
 def _unit_float(value: str) -> float:
     parsed = float(value)
     if not 0 <= parsed <= 1:
@@ -97,7 +104,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_false",
         help=argparse.SUPPRESS,
     )
-    video_parser.add_argument("--fps", type=_positive_float, default=20.0)
+    video_parser.add_argument("--fps", type=_positive_float, default=VideoOptions.fps)
     video_parser.add_argument(
         "--width", type=_positive_int, default=160, help="maximum character width"
     )
@@ -105,7 +112,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--smoothing",
         type=_unit_float,
         default=1.0,
-        help="temporal smoothing: 1 is crisp, lower values add trails",
+        help="reduce shimmer in still areas: 1 disables blending, 0 is strongest",
     )
     video_parser.add_argument(
         "--quant",
@@ -120,6 +127,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="maximum consecutive frames dropped to catch up",
     )
     video_parser.add_argument("--no-audio", action="store_true", help="disable FFplay audio")
+    video_parser.add_argument(
+        "--start-delay",
+        type=_nonnegative_float,
+        default=VideoOptions.start_delay,
+        help="wait before starting video and audio, in seconds (default: %(default)s)",
+    )
     video_parser.add_argument(
         "--audio-delay",
         type=_audio_delay,
@@ -187,6 +200,7 @@ def _run_video(args: argparse.Namespace) -> int:
         max_frame_skip=args.max_frame_skip,
         audio=not args.no_audio,
         audio_delay=args.audio_delay,
+        start_delay=args.start_delay,
     )
     play_video(
         args.path.expanduser().resolve(),
