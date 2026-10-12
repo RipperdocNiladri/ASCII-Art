@@ -10,7 +10,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, BinaryIO
 
-from terminal_ascii_art.terminal import draw_frame, fit_source_size, terminal_session
+from terminal_ascii_art.terminal import (
+    CHAR_ASPECT,
+    draw_frame,
+    fit_source_size,
+    terminal_session,
+    terminal_size,
+)
 
 
 class VideoRenderError(RuntimeError):
@@ -28,6 +34,7 @@ class VideoOptions:
     audio: bool = True
     audio_delay: float = 0.0
     start_delay: float = 0.0
+    center: bool = False
 
 
 def _load_numpy() -> Any:
@@ -83,6 +90,18 @@ def get_video_dimensions(video: Path) -> tuple[int, int] | None:
 def _frame_array(raw: bytes, rows: int, cols: int, color: bool, np: Any) -> Any:
     shape = (rows, cols, 3) if color else (rows, cols)
     return np.frombuffer(raw, dtype=np.uint8).reshape(shape).astype(np.float32)
+
+
+def _resize_frame(
+    raw: bytes, decoded_size: tuple[int, int], size: tuple[int, int],
+    color: bool, np: Any,
+) -> Any:
+    if decoded_size == size:
+        return _frame_array(raw, size[1], size[0], color, np)
+    from PIL import Image
+
+    image = Image.frombytes("RGB" if color else "L", decoded_size, raw)
+    return np.asarray(image.resize(size, Image.Resampling.LANCZOS), dtype=np.float32)
 
 
 def _smooth(current: Any, previous: Any | None, factor: float, np: Any) -> Any:
@@ -169,7 +188,8 @@ def _stop_process(process: subprocess.Popen[Any] | None) -> None:
     except (OSError, subprocess.SubprocessError):
         try:
             process.kill()
-        except OSError:
+            process.wait(timeout=2)
+        except (OSError, subprocess.SubprocessError):
             pass
 
 
@@ -184,11 +204,21 @@ def play_video(video: Path, *, options: VideoOptions, ramp: str) -> None:
         raise VideoRenderError("FFplay was not found on PATH. Use --no-audio to continue.")
 
     np = _load_numpy()
-    source_width, source_height = get_video_dimensions(video) or (16, 9)
-    cols, rows = fit_source_size(source_width, source_height, max_width=options.max_width)
+    source_size = get_video_dimensions(video)
+    source_width, source_height = source_size or (16, 9)
+    cols, rows = fit_source_size(
+        source_width, source_height, max_width=options.max_width,
+        available=terminal_size(live=True) if options.center else None,
+    )
+    decode_cols, decode_rows = cols, rows
+    if options.center:
+        # Keep the decoder and playback clock running while the display resizes.
+        # Native width bounds memory use when --width is larger than the source.
+        decode_cols = min(options.max_width, source_width) if source_size else options.max_width
+        decode_rows = max(1, round(decode_cols * source_height / source_width * CHAR_ASPECT))
     pixel_format = "rgb24" if options.color else "gray"
     channels = 3 if options.color else 1
-    frame_size = cols * rows * channels
+    frame_size = decode_cols * decode_rows * channels
 
     print(f"Video: {video.name}")
     print(f"Render: {cols} x {rows} characters at {options.fps:g} FPS")
@@ -203,7 +233,7 @@ def play_video(video: Path, *, options: VideoOptions, ramp: str) -> None:
         "-i",
         str(video),
         "-vf",
-        f"fps={options.fps},scale={cols}:{rows}:flags=lanczos+accurate_rnd:out_range=full",
+        f"fps={options.fps},scale={decode_cols}:{decode_rows}:flags=lanczos+accurate_rnd:out_range=full",
         "-f",
         "rawvideo",
         "-pix_fmt",
@@ -238,8 +268,10 @@ def play_video(video: Path, *, options: VideoOptions, ramp: str) -> None:
         frame_index = 0
         consecutive_drops = 0
         previous = None
+        previous_terminal = None
 
-        with terminal_session():
+        session = terminal_session(alternate_screen=True) if options.center else terminal_session()
+        with session:
             while True:
                 raw = read_frame(video_process.stdout, frame_size)
                 if raw is None:
@@ -265,7 +297,20 @@ def play_video(video: Path, *, options: VideoOptions, ramp: str) -> None:
                     continue
 
                 consecutive_drops = 0
-                current = _frame_array(raw, rows, cols, options.color, np)
+                if options.center:
+                    available = terminal_size(live=True)
+                    size = fit_source_size(
+                        source_width, source_height,
+                        max_width=options.max_width, available=available,
+                    )
+                    if size != (cols, rows):
+                        previous = None
+                    cols, rows = size
+                    current = _resize_frame(
+                        raw, (decode_cols, decode_rows), size, options.color, np,
+                    )
+                else:
+                    current = _frame_array(raw, rows, cols, options.color, np)
                 current = _smooth(current, previous, options.smoothing, np)
                 previous = current
                 if options.color:
@@ -281,7 +326,16 @@ def play_video(video: Path, *, options: VideoOptions, ramp: str) -> None:
                 if audio_start_time is not None and time.perf_counter() >= audio_start_time:
                     audio_process = _start_audio(video)
                     audio_start_time = None
-                draw_frame(frame)
+                if options.center:
+                    draw_frame(
+                        frame,
+                        column=max(0, (available[0] - cols) // 2),
+                        row=max(0, (available[1] - rows) // 2),
+                        clear=available != previous_terminal,
+                    )
+                    previous_terminal = available
+                else:
+                    draw_frame(frame)
 
         video_process.wait(timeout=5)
         if video_process.returncode:

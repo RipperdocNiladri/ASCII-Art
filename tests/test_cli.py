@@ -38,6 +38,8 @@ class CliTests(unittest.TestCase):
     def test_video_defaults_to_monochrome(self) -> None:
         args = build_parser().parse_args(["video", "movie.mp4"])
         self.assertFalse(args.color)
+        self.assertFalse(args.center)
+        self.assertFalse(VideoOptions().center)
         self.assertEqual(args.fps, 30.0)
         self.assertEqual(args.fps, VideoOptions().fps)
         self.assertEqual(args.start_delay, 0.0)
@@ -55,6 +57,19 @@ class CliTests(unittest.TestCase):
                 with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as raised:
                     build_parser().parse_args(["video", "movie.mp4", f"--start-delay={value}"])
                 self.assertEqual(raised.exception.code, 2)
+
+    @mock.patch("terminal_ascii_art.cli.play_video")
+    def test_center_is_passed_to_playback(self, play: mock.Mock) -> None:
+        self.assertEqual(main(["video", "movie.mp4", "--center"]), 0)
+        self.assertTrue(play.call_args.kwargs["options"].center)
+
+    def test_video_help_describes_centering(self) -> None:
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output), self.assertRaises(SystemExit) as raised:
+            build_parser().parse_args(["video", "--help"])
+        self.assertEqual(raised.exception.code, 0)
+        self.assertIn("--center", output.getvalue())
+        self.assertIn("terminal resizing", output.getvalue())
 
     @mock.patch("terminal_ascii_art.cli.play_video")
     def test_start_delay_is_passed_to_playback(self, play: mock.Mock) -> None:

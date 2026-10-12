@@ -82,6 +82,19 @@ Use a smaller, silent render for a slower terminal:
 ascii-art video video.mp4 --width 80 --fps 20 --no-audio
 ```
 
+Center playback in the terminal and adapt when you resize the window:
+
+```sh
+ascii-art video video.mp4 --color --center --width 220 --no-audio
+```
+
+`--center` distributes unused space on both sides and above/below the video.
+It preserves the source aspect ratio and keeps `--width` as the maximum column
+count. Resizing adjusts the picture without restarting the video or audio.
+Playback uses the terminal's alternate screen; finishing or pressing `Ctrl+C`
+restores the previous screen. This requires an ANSI terminal with alternate-screen
+support. Without `--center`, playback retains its existing position and sizing.
+
 Adjust audio timing independently of the startup delay:
 
 ```powershell
@@ -153,6 +166,7 @@ All commands and options supported by `ascii-art` are listed here. Put options a
 | `--invert` | `image`, `video`, `demo` | Reverse the chosen dark-to-bright character ramp. | Off |
 | `-o PATH`, `--output PATH` | `image` | Write or replace a UTF-8 text file; create parent folders if needed. | Print to terminal |
 | `--color` | `video` | Enable ANSI 24-bit foreground colors. | Off |
+| `--center` | `video` | Center playback and adapt to window resizing; restore the previous screen on exit. | Off |
 | `--mono` | `video` | Force monochrome; compatibility option. If combined with `--color`, the last flag wins. | Monochrome |
 | `--fps N` | `video`, `demo` | Target frames per second; positive finite number. | `30` |
 | `--smoothing N` | `video` | Blend small changes in still areas: `0` is strongest, `1` disables blending. | `1` |

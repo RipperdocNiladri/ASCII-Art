@@ -12,7 +12,17 @@ from collections.abc import Callable, Iterator
 CHAR_ASPECT = 0.5
 
 
-def terminal_size(fallback: tuple[int, int] = (120, 40)) -> tuple[int, int]:
+def terminal_size(
+    fallback: tuple[int, int] = (120, 40), *, live: bool = False,
+) -> tuple[int, int]:
+    if live:
+        # Exported COLUMNS/LINES can stay stale after the window is resized.
+        try:
+            size = os.get_terminal_size(sys.stdout.fileno())
+            if size.columns > 0 and size.lines > 0:
+                return size.columns, size.lines
+        except (AttributeError, OSError, ValueError):
+            pass
     size = shutil.get_terminal_size(fallback=fallback)
     return size.columns, size.lines
 
@@ -80,21 +90,35 @@ def _enable_windows_ansi() -> None:
 
 
 @contextlib.contextmanager
-def terminal_session() -> Iterator[None]:
+def terminal_session(*, alternate_screen: bool = False) -> Iterator[None]:
     """Prepare the terminal and always restore its cursor and colors."""
     _enable_windows_ansi()
+    if alternate_screen:
+        sys.stdout.write("\033[?1049h")
     sys.stdout.write("\033[2J\033[H\033[?25l")
     sys.stdout.flush()
     try:
         yield
     finally:
-        sys.stdout.write("\033[0m\033[?25h\n")
+        sys.stdout.write("\033[0m\033[?25h")
+        sys.stdout.write("\033[?1049l" if alternate_screen else "\n")
         sys.stdout.flush()
 
 
-def draw_frame(frame: str) -> None:
-    sys.stdout.write("\033[H")
-    sys.stdout.write(frame)
+def draw_frame(
+    frame: str, *, column: int = 0, row: int = 0, clear: bool = False,
+) -> None:
+    if clear:
+        sys.stdout.write("\033[2J")
+    if column or row:
+        # Newlines reset the column; address every line separately.
+        sys.stdout.write("".join(
+            f"\033[{row + offset + 1};{column + 1}H{line}"
+            for offset, line in enumerate(frame.split("\n"))
+        ))
+    else:
+        sys.stdout.write("\033[H")
+        sys.stdout.write(frame)
     sys.stdout.flush()
 
 
