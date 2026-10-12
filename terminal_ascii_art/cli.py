@@ -99,6 +99,10 @@ def build_parser() -> argparse.ArgumentParser:
     video_parser.add_argument("path", type=Path, help="path to a video")
     video_parser.add_argument("--color", action="store_true", help="use ANSI true-color")
     video_parser.add_argument(
+        "--center", action="store_true",
+        help="center video and adapt to terminal resizing",
+    )
+    video_parser.add_argument(
         "--mono",
         dest="color",
         action="store_false",
@@ -201,6 +205,7 @@ def _run_video(args: argparse.Namespace) -> int:
         audio=not args.no_audio,
         audio_delay=args.audio_delay,
         start_delay=args.start_delay,
+        center=args.center,
     )
     play_video(
         args.path.expanduser().resolve(),

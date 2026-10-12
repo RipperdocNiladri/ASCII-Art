@@ -11,6 +11,7 @@ import numpy
 from terminal_ascii_art.media.video import (
     VideoOptions,
     VideoRenderError,
+    _resize_frame,
     _render_color,
     _render_mono,
     _smooth,
@@ -22,6 +23,17 @@ from terminal_ascii_art.media.video import (
 
 
 class VideoHelperTests(unittest.TestCase):
+    def test_resizing_preserves_uniform_pixels_and_channel_layout(self) -> None:
+        for color, shape in ((False, (3, 4)), (True, (3, 4, 3))):
+            source = numpy.full(shape, 137, dtype=numpy.uint8)
+            for size in ((4, 3), (1, 1), (8, 6)):
+                with self.subTest(color=color, size=size):
+                    resized = _resize_frame(source.tobytes(), (4, 3), size, color, numpy)
+                    expected_shape = (size[1], size[0], 3) if color else (size[1], size[0])
+                    self.assertEqual(resized.shape, expected_shape)
+                    self.assertEqual(resized.dtype, numpy.float32)
+                    numpy.testing.assert_array_equal(resized, numpy.full(expected_shape, 137))
+
     def test_read_frame_combines_short_reads(self) -> None:
         self.assertEqual(read_frame(io.BytesIO(b"abcdef"), 6), b"abcdef")
 
@@ -120,6 +132,7 @@ class VideoHelperTests(unittest.TestCase):
 
         process.terminate.assert_called_once_with()
         process.kill.assert_called_once_with()
+        self.assertEqual(process.wait.call_count, 2)
 
 
 class VideoPlaybackTests(unittest.TestCase):
