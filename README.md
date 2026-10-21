@@ -184,3 +184,5 @@ demo  → geometry + projection + lighting → ASCII terminal output
 ## License
 
 This project is distributed under the [MIT License](https://github.com/TFQ0/ASCII-Art/blob/main/LICENSE).
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/RipperdocNiladri/ASCII-Art)
